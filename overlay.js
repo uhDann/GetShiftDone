@@ -11,17 +11,22 @@ function createOverlay() {
 }
 
 // Update the overlay status
-function updateOverlayStatus(isProductive, message) {
+function updateOverlayStatus(isProductive, message, size = 'small') {
   const overlay = document.getElementById('productivity-status-overlay');
   if (overlay) {
+    // Remove all size classes first
+    overlay.classList.remove('productive', 'unproductive', 'small', 'medium', 'large');
+    
+    // Add appropriate classes
     overlay.className = isProductive ? 'productive' : 'unproductive';
+    overlay.classList.add(size);
+    
     overlay.textContent = message;
-    overlay.classList.remove('hidden');
-    console.log('Overlay status updated:', message);
+    console.log('Overlay status updated:', message, 'size:', size);
   } else {
     // If overlay doesn't exist, create it first
     createOverlay();
-    updateOverlayStatus(isProductive, message);
+    updateOverlayStatus(isProductive, message, size);
   }
 }
 
@@ -45,7 +50,7 @@ try {
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   try {
     if (message.action === 'updateStatus') {
-      updateOverlayStatus(message.isProductive, message.message);
+      updateOverlayStatus(message.isProductive, message.message, message.size || 'small');
       sendResponse({ success: true });
     } else if (message.action === 'removeOverlay') {
       removeOverlay();
