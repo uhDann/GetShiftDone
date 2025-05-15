@@ -1,6 +1,28 @@
 // List of allowed domains
 const ALLOWED_DOMAINS = ['amazon.com', 'salesforce.com', 'aws.amazon.com'];
 
+// Domains with custom messages
+const CUSTOM_MESSAGES = {
+  'stackoverflow.com': {
+    message: 'Get back to being productive',
+    size: 'medium'
+  },
+  'github.com': {
+    message: 'Get back to being productive',
+    size: 'medium'
+  },
+  'linkedin.com': {
+    message: 'Stop shitposting and get back to work',
+    size: 'large'
+  }
+};
+
+// Default message for unproductive sites
+const DEFAULT_UNPRODUCTIVE_MESSAGE = {
+  message: 'you suck',
+  size: 'small'
+};
+
 // API endpoint for reporting unproductive sites
 const API_ENDPOINT = 'https://example.com/unproductive';
 
@@ -21,6 +43,26 @@ function isAllowedDomain(url) {
   } catch (e) {
     console.error('Error parsing URL:', e);
     return false;
+  }
+}
+
+// Function to get custom message for a domain
+function getMessageForDomain(url) {
+  try {
+    const hostname = new URL(url).hostname;
+    
+    // Check for exact domain matches
+    for (const domain in CUSTOM_MESSAGES) {
+      if (hostname === domain || hostname.endsWith('.' + domain)) {
+        return CUSTOM_MESSAGES[domain];
+      }
+    }
+    
+    // Return default message if no custom message found
+    return DEFAULT_UNPRODUCTIVE_MESSAGE;
+  } catch (e) {
+    console.error('Error parsing URL for message:', e);
+    return DEFAULT_UNPRODUCTIVE_MESSAGE;
   }
 }
 
@@ -90,22 +132,40 @@ async function injectOverlay(tabId, url) {
 }
 
 // Function to update the overlay status
-function updateOverlayStatus(tabId, isProductive) {
+function updateOverlayStatus(tabId, isProductive, url) {
   if (!overlayInjectedTabs.has(tabId)) {
     return; // Skip if overlay not injected
   }
   
   try {
-    chrome.tabs.sendMessage(tabId, {
-      action: 'updateStatus',
-      isProductive: isProductive,
-      message: isProductive ? 'productive' : 'you suck'
-    }, response => {
-      if (chrome.runtime.lastError) {
-        // Tab might have been closed or navigated
-        overlayInjectedTabs.delete(tabId);
-      }
-    });
+    if (isProductive) {
+      chrome.tabs.sendMessage(tabId, {
+        action: 'updateStatus',
+        isProductive: true,
+        message: 'productive',
+        size: 'small'
+      }, response => {
+        if (chrome.runtime.lastError) {
+          // Tab might have been closed or navigated
+          overlayInjectedTabs.delete(tabId);
+        }
+      });
+    } else {
+      // Get custom message for this domain
+      const messageConfig = getMessageForDomain(url);
+      
+      chrome.tabs.sendMessage(tabId, {
+        action: 'updateStatus',
+        isProductive: false,
+        message: messageConfig.message,
+        size: messageConfig.size
+      }, response => {
+        if (chrome.runtime.lastError) {
+          // Tab might have been closed or navigated
+          overlayInjectedTabs.delete(tabId);
+        }
+      });
+    }
   } catch (error) {
     console.error('Error sending message to tab:', error);
   }
@@ -129,7 +189,7 @@ function handleTabUpdate(tabId, changeInfo, tab) {
     const isProductive = isAllowedDomain(tab.url);
     
     // Update overlay status
-    updateOverlayStatus(tabId, isProductive);
+    updateOverlayStatus(tabId, isProductive, tab.url);
     
     // Report if not productive
     if (!isProductive) {
@@ -159,7 +219,7 @@ function handleTabActivation(activeInfo) {
       const isProductive = isAllowedDomain(tab.url);
       
       // Update overlay status
-      updateOverlayStatus(activeInfo.tabId, isProductive);
+      updateOverlayStatus(activeInfo.tabId, isProductive, tab.url);
       
       // Report if not productive
       if (!isProductive) {
@@ -190,7 +250,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         injectOverlay(tabId, tabs[0].url).then(() => {
           // Check if productive
           const isProductive = isAllowedDomain(tabs[0].url);
-          updateOverlayStatus(tabId, isProductive);
+          updateOverlayStatus(tabId, isProductive, tabs[0].url);
           
           if (!isProductive) {
             reportUnproductiveSite(tabs[0].url);
