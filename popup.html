@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Productivity Monitor</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <h1>Productivity Monitor</h1>
+    <div class="status-container">
+      <div class="status-indicator"></div>
+      <span id="status-text">Monitoring inactive</span>
+    </div>
+    
+    <!-- New section for current site status -->
+    <div class="site-status-container">
+      <h2>Current Site</h2>
+      <div id="site-status" class="site-status">
+        <div class="site-status-indicator"></div>
+        <div class="site-status-details">
+          <span id="site-url">Not monitoring</span>
+          <span id="site-productivity-status">-</span>
+        </div>
+      </div>
+    </div>
+    
+    <div class="button-container">
+      <button id="start-session" class="btn btn-primary">Start Session</button>
+      <button id="end-session" class="btn btn-secondary" disabled>End Session</button>
+    </div>
+  </div>
+  <script src="popup.js"></script>
+</body>
+</html> 

@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Icon Generator</title>
+  <script>
+    window.onload = function() {
+      const canvas = document.getElementById('iconCanvas');
+      const ctx = canvas.getContext('2d');
+      
+      // Fill background
+      ctx.fillStyle = '#6d28d9'; // Purple background
+      ctx.fillRect(0, 0, 16, 16);
+      
+      // Add "PM" text
+      ctx.fillStyle = 'white';
+      ctx.font = 'bold 8px Arial';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('PM', 8, 8);
+      
+      // Convert to PNG and download
+      const link = document.createElement('a');
+      link.download = 'icon16.png';
+      link.href = canvas.toDataURL('image/png');
+      link.textContent = 'Download icon16.png';
+      document.body.appendChild(link);
+      
+      // Auto-click for download
+      link.click();
+    };
+  </script>
+</head>
+<body>
+  <canvas id="iconCanvas" width="16" height="16"></canvas>
+</body>
+</html> 
